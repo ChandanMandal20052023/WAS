@@ -150,3 +150,4 @@ func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSON(w, http.StatusOK, map[string]string{"message": "Password updated successfully"})
 }
+

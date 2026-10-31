@@ -152,3 +152,4 @@ func (h *Handler) GetMembers(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSON(w, http.StatusOK, members)
 }
+
