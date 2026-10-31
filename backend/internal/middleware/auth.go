@@ -119,3 +119,17 @@ func GetUserEmail(ctx context.Context) string {
 	}
 	return ""
 }
+
+func GetClaims(ctx context.Context) (*TokenClaims, bool) {
+	userID := GetUserID(ctx)
+	orgID := GetOrganizationID(ctx)
+	if userID == uuid.Nil || orgID == uuid.Nil {
+		return nil, false
+	}
+	return &TokenClaims{
+		UserID:         userID,
+		OrganizationID: orgID,
+		Email:          GetUserEmail(ctx),
+		Role:           GetUserRole(ctx),
+	}, true
+}

@@ -13,4 +13,5 @@ type EvolutionGateway interface {
 	Reconnect(ctx context.Context, token string) error
 	DeleteInstance(ctx context.Context, instanceID string) error
 	PairPhone(ctx context.Context, token, phone string) (string, error)
+	SendTextMessage(ctx context.Context, token, phone, message string) (string, error)
 }

@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 type mockInstance struct {
@@ -118,6 +120,13 @@ func (m *MockAdapter) PairPhone(ctx context.Context, token, phone string) (strin
 	defer m.mu.Unlock()
 
 	return "WAS-7829-4102", nil
+}
+
+func (m *MockAdapter) SendTextMessage(ctx context.Context, token, phone, message string) (string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return fmt.Sprintf("MOCK-WA-%s", uuid.New().String()[:8]), nil
 }
 
 // SetConnected allows test suites to toggle connected status

@@ -15,8 +15,12 @@ import (
 	"was/backend/internal/auth"
 	"was/backend/internal/channels"
 	"was/backend/internal/config"
+	"was/backend/internal/contacts"
+	"was/backend/internal/conversations"
+	"was/backend/internal/dashboard"
 	"was/backend/internal/database"
 	"was/backend/internal/evolution"
+	"was/backend/internal/messages"
 	"was/backend/internal/middleware"
 	"was/backend/internal/models"
 	"was/backend/internal/organizations"
@@ -69,6 +73,10 @@ func main() {
 	var orgHandler *organizations.Handler
 	var channelHandler *channels.Handler
 	var webhookHandler *evolution.WebhookHandler
+	var contactHandler *contacts.Handler
+	var convHandler *conversations.Handler
+	var msgHandler *messages.Handler
+	var dashHandler *dashboard.Handler
 
 	if pg != nil && pg.Pool != nil {
 		authRepo := auth.NewRepository(pg.Pool)
@@ -82,7 +90,22 @@ func main() {
 		channelService := channels.NewService(channelRepo, evolutionGateway, cfg.WebhookBaseURL)
 		channelHandler = channels.NewHandler(channelService)
 
-		webhookHandler = evolution.NewWebhookHandler(channelRepo)
+		contactRepo := contacts.NewRepository(pg.Pool)
+		contactService := contacts.NewService(contactRepo)
+		contactHandler = contacts.NewHandler(contactService)
+
+		convRepo := conversations.NewRepository(pg.Pool)
+		convService := conversations.NewService(convRepo)
+		convHandler = conversations.NewHandler(convService)
+
+		msgRepo := messages.NewRepository(pg.Pool)
+		msgService := messages.NewService(msgRepo, convRepo, contactRepo, channelRepo, evolutionGateway)
+		msgHandler = messages.NewHandler(msgService)
+
+		webhookHandler = evolution.NewWebhookHandler(channelRepo, msgService)
+
+		dashRepo := dashboard.NewRepository(pg.Pool)
+		dashHandler = dashboard.NewHandler(dashRepo)
 	}
 
 	r := chi.NewRouter()
@@ -207,17 +230,37 @@ func main() {
 			}
 		})
 
-		// Placeholder route groups ready for next phases
-		v1.Route("/contacts", func(r chi.Router) {
-			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-				utils.JSON(w, http.StatusOK, "contacts module initialized")
-			})
+		// Dashboard Metrics
+		v1.Route("/dashboard", func(dashRouter chi.Router) {
+			if dashHandler != nil {
+				dashRouter.Use(middleware.Authenticate(tokenManager))
+				dashHandler.RegisterRoutes(dashRouter)
+			}
 		})
 
-		v1.Route("/conversations", func(r chi.Router) {
-			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-				utils.JSON(w, http.StatusOK, "conversations module initialized")
-			})
+		// Contact Routes
+		v1.Route("/contacts", func(cRouter chi.Router) {
+			if contactHandler != nil {
+				cRouter.Use(middleware.Authenticate(tokenManager))
+				contactHandler.RegisterRoutes(cRouter)
+			}
+		})
+
+		// Tag Routes
+		v1.Route("/tags", func(tRouter chi.Router) {
+			if contactHandler != nil {
+				tRouter.Use(middleware.Authenticate(tokenManager))
+				contactHandler.RegisterTagRoutes(tRouter)
+			}
+		})
+
+		// Conversations & Messaging Routes
+		v1.Route("/conversations", func(cvRouter chi.Router) {
+			if convHandler != nil && msgHandler != nil {
+				cvRouter.Use(middleware.Authenticate(tokenManager))
+				convHandler.RegisterRoutes(cvRouter)
+				msgHandler.RegisterRoutes(cvRouter)
+			}
 		})
 	})
 

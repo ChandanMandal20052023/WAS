@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -24,12 +26,17 @@ type ChannelUpdater interface {
 	UpdateStatusByToken(ctx context.Context, token string, status models.ChannelStatus, phone *string, qrcode *string) error
 }
 
-type WebhookHandler struct {
-	updater ChannelUpdater
+type InboundProcessor interface {
+	ProcessInboundMessage(ctx context.Context, token, senderPhone, senderName, msgID, text string, timestamp time.Time) error
 }
 
-func NewWebhookHandler(updater ChannelUpdater) *WebhookHandler {
-	return &WebhookHandler{updater: updater}
+type WebhookHandler struct {
+	updater ChannelUpdater
+	inbound InboundProcessor
+}
+
+func NewWebhookHandler(updater ChannelUpdater, inbound InboundProcessor) *WebhookHandler {
+	return &WebhookHandler{updater: updater, inbound: inbound}
 }
 
 func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
@@ -65,6 +72,52 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	case "Connecting":
 		_ = h.updater.UpdateStatusByToken(r.Context(), token, models.StatusConnecting, nil, nil)
+
+	case "messages.upsert", "Message", "messages.receive":
+		if h.inbound != nil {
+			var remoteJid, pushName, msgText, msgID string
+			if sender, ok := payload.Data["sender"].(string); ok {
+				remoteJid = sender
+			} else if rJid, ok := payload.Data["remoteJid"].(string); ok {
+				remoteJid = rJid
+			}
+
+			if name, ok := payload.Data["pushName"].(string); ok {
+				pushName = name
+			}
+
+			if key, ok := payload.Data["key"].(map[string]interface{}); ok {
+				if id, ok := key["id"].(string); ok {
+					msgID = id
+				}
+				if fromMe, ok := key["fromMe"].(bool); ok && fromMe {
+					// Ignore outbound echo messages
+					break
+				}
+			}
+
+			if msg, ok := payload.Data["message"].(map[string]interface{}); ok {
+				if text, ok := msg["conversation"].(string); ok {
+					msgText = text
+				} else if ext, ok := msg["extendedTextMessage"].(map[string]interface{}); ok {
+					if text, ok := ext["text"].(string); ok {
+						msgText = text
+					}
+				}
+			} else if text, ok := payload.Data["text"].(string); ok {
+				msgText = text
+			}
+
+			// Clean remoteJid (e.g. "1234567890@s.whatsapp.net" -> "+1234567890")
+			phone := strings.Split(remoteJid, "@")[0]
+			if !strings.HasPrefix(phone, "+") && phone != "" {
+				phone = "+" + phone
+			}
+
+			if phone != "" && msgText != "" {
+				_ = h.inbound.ProcessInboundMessage(r.Context(), token, phone, pushName, msgID, msgText, time.Now())
+			}
+		}
 	}
 
 	utils.JSON(w, http.StatusOK, map[string]string{"status": "processed"})

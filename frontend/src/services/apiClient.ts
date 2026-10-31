@@ -54,3 +54,36 @@ export async function apiRequest<T>(endpoint: string, options: RequestOptions = 
   return (data?.data !== undefined ? data.data : data) as T;
 }
 
+export const apiClient = {
+  async get<T>(url: string, options: { params?: Record<string, any> } = {}): Promise<{ data: T }> {
+    const data = await apiRequest<T>(url, { method: 'GET', params: options.params });
+    return { data };
+  },
+  async post<T>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await apiRequest<T>(url, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  },
+  async put<T>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await apiRequest<T>(url, {
+      method: 'PUT',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  },
+  async patch<T>(url: string, body?: any): Promise<{ data: T }> {
+    const data = await apiRequest<T>(url, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return { data };
+  },
+  async delete<T>(url: string): Promise<{ data: T }> {
+    const data = await apiRequest<T>(url, { method: 'DELETE' });
+    return { data };
+  },
+};
+
+

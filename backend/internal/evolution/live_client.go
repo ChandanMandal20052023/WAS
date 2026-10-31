@@ -165,3 +165,30 @@ func (c *LiveClient) PairPhone(ctx context.Context, token, phone string) (string
 	}
 	return parsed.Data, nil
 }
+
+func (c *LiveClient) SendTextMessage(ctx context.Context, token, phone, message string) (string, error) {
+	payload := map[string]interface{}{
+		"number": phone,
+		"text":   message,
+	}
+	respBytes, err := c.doRequest(ctx, http.MethodPost, "/send/text", payload, token)
+	if err != nil {
+		return "", fmt.Errorf("failed to send text message via evolution-go: %w", err)
+	}
+
+	var parsed struct {
+		ID  string `json:"id"`
+		Key struct {
+			ID string `json:"id"`
+		} `json:"key"`
+	}
+	_ = json.Unmarshal(respBytes, &parsed)
+	msgID := parsed.ID
+	if msgID == "" {
+		msgID = parsed.Key.ID
+	}
+	if msgID == "" {
+		msgID = fmt.Sprintf("WA-%d", time.Now().UnixNano())
+	}
+	return msgID, nil
+}

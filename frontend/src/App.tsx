@@ -6,22 +6,9 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { RegisterPage } from './pages/auth/RegisterPage';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 
-// Placeholder views for subsequent phases
-const InboxPlaceholder: React.FC = () => (
-  <div className="p-8 text-center text-muted-foreground">
-    <h2 className="text-xl font-bold text-foreground">Centralized WhatsApp Inbox</h2>
-    <p className="mt-2 text-sm">3-Panel Inbox with real-time customer messaging scheduled for Phase 7.</p>
-  </div>
-);
-
-const ContactsPlaceholder: React.FC = () => (
-  <div className="p-8 text-center text-muted-foreground">
-    <h2 className="text-xl font-bold text-foreground">Contact Intelligence & Management</h2>
-    <p className="mt-2 text-sm">E.164 normalized customer profiles scheduled for Phase 6.</p>
-  </div>
-);
-
 import { WhatsAppChannelsPage } from './pages/channels/WhatsAppChannelsPage';
+import { ContactsPage } from './pages/contacts/ContactsPage';
+import { InboxPage } from './pages/inbox/InboxPage';
 
 const TeamPlaceholder: React.FC = () => (
   <div className="p-8 text-center text-muted-foreground">
@@ -62,8 +49,8 @@ export const App: React.FC = () => {
           }
         >
           <Route index element={<DashboardPage />} />
-          <Route path="inbox" element={<InboxPlaceholder />} />
-          <Route path="contacts" element={<ContactsPlaceholder />} />
+          <Route path="inbox" element={<InboxPage />} />
+          <Route path="contacts" element={<ContactsPage />} />
           <Route path="channels" element={<WhatsAppChannelsPage />} />
           <Route path="team" element={<TeamPlaceholder />} />
           <Route path="analytics" element={<AnalyticsPlaceholder />} />
