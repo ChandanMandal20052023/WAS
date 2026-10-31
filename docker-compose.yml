@@ -72,6 +72,7 @@ services:
     environment:
       PORT: 8080
       APP_ENV: development
+      USE_MOCK_EVOLUTION_ADAPTER: ${USE_MOCK_EVOLUTION_ADAPTER:-true}
       DATABASE_URL: "postgres://${POSTGRES_USER:-was_user}:${POSTGRES_PASSWORD:-was_password}@was-postgres:5432/was_crm?sslmode=disable"
       REDIS_URL: "redis://was-redis:6379"
       JWT_SECRET: ${JWT_SECRET:-was_jwt_super_secret_signing_key_32bytes}
