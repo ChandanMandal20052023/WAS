@@ -12,9 +12,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"was/backend/internal/auth"
 	"was/backend/internal/config"
 	"was/backend/internal/database"
 	"was/backend/internal/middleware"
+	"was/backend/internal/models"
+	"was/backend/internal/organizations"
 	"was/backend/internal/utils"
 	"was/backend/migrations"
 )
@@ -23,6 +26,9 @@ func main() {
 	cfg := config.Load()
 
 	log.Printf("[WAS] Starting %s in %s mode on port %s", cfg.AppName, cfg.AppEnv, cfg.Port)
+
+	// Token Manager for JWT Auth
+	tokenManager := auth.NewTokenManager(cfg.JWTSecret)
 
 	// Database initialization
 	pg, err := database.NewPostgres(cfg.DatabaseURL)
@@ -44,6 +50,19 @@ func main() {
 		log.Printf("[redis] Warning: Failed to connect to Redis: %v", err)
 	} else {
 		defer rdb.Close()
+	}
+
+	// Instantiate Services and Handlers if DB is available
+	var authHandler *auth.Handler
+	var orgHandler *organizations.Handler
+
+	if pg != nil && pg.Pool != nil {
+		authRepo := auth.NewRepository(pg.Pool)
+		authService := auth.NewService(authRepo, tokenManager)
+		authHandler = auth.NewHandler(authService)
+
+		orgRepo := organizations.NewRepository(pg.Pool)
+		orgHandler = organizations.NewHandler(orgRepo)
 	}
 
 	r := chi.NewRouter()
@@ -100,13 +119,44 @@ func main() {
 			})
 		})
 
-		// Placeholder route groups ready for next phases
-		v1.Route("/auth", func(r chi.Router) {
-			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-				utils.JSON(w, http.StatusOK, "auth module initialized")
-			})
+		// Authentication Routes
+		v1.Route("/auth", func(authRouter chi.Router) {
+			if authHandler != nil {
+				// Public routes
+				authRouter.Post("/register", authHandler.Register)
+				authRouter.Post("/login", authHandler.Login)
+				authRouter.Post("/refresh", authHandler.Refresh)
+				authRouter.Post("/forgot-password", authHandler.ForgotPassword)
+				authRouter.Post("/reset-password", authHandler.ResetPassword)
+				authRouter.Post("/invites/accept", authHandler.AcceptInvite)
+
+				// Protected routes
+				authRouter.Group(func(protected chi.Router) {
+					protected.Use(middleware.Authenticate(tokenManager))
+
+					protected.Get("/me", authHandler.GetMe)
+					protected.Post("/logout", authHandler.Logout)
+					protected.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Post("/invite", authHandler.Invite)
+				})
+			} else {
+				authRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+					utils.JSON(w, http.StatusOK, "auth module initialized (database pending)")
+				})
+			}
 		})
 
+		// Organization Routes
+		v1.Route("/organizations", func(orgRouter chi.Router) {
+			if orgHandler != nil {
+				orgRouter.Use(middleware.Authenticate(tokenManager))
+
+				orgRouter.Get("/current", orgHandler.GetCurrent)
+				orgRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Put("/current", orgHandler.UpdateCurrent)
+				orgRouter.Get("/members", orgHandler.GetMembers)
+			}
+		})
+
+		// Placeholder route groups ready for next phases
 		v1.Route("/channels", func(r chi.Router) {
 			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 				utils.JSON(w, http.StatusOK, "channels module initialized")
@@ -157,4 +207,3 @@ func main() {
 
 	log.Println("[WAS] Server exited cleanly.")
 }
-

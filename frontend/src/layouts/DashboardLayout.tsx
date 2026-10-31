@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
+import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   MessageSquare,
@@ -16,6 +16,8 @@ import {
   Building2,
 } from 'lucide-react';
 
+import { useAuthStore } from '../stores/authStore';
+
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
   { name: 'Inbox', path: '/inbox', icon: MessageSquare, badge: 'Live' },
@@ -28,13 +30,30 @@ const navItems = [
 
 export const DashboardLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const { user, organization, role, logout } = useAuthStore();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
     document.documentElement.classList.toggle('dark');
   };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const userInitials = user?.full_name
+    ? user.full_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2)
+    : 'U';
 
   return (
     <div className="flex h-screen w-full bg-background overflow-hidden">
@@ -66,10 +85,12 @@ export const DashboardLayout: React.FC = () => {
         {/* Current Organization Badge */}
         <div className="px-4 py-3 border-b border-border bg-muted/40">
           <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold truncate">Acme Global Ltd</span>
+            <Building2 className="w-4 h-4 text-primary flex-shrink-0" />
+            <span className="text-xs font-semibold truncate">
+              {organization?.name || 'Default Organization'}
+            </span>
             <span className="ml-auto text-[10px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">
-              Owner
+              {role || 'Agent'}
             </span>
           </div>
         </div>
@@ -116,10 +137,14 @@ export const DashboardLayout: React.FC = () => {
             {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs">
-              CK
+            <div
+              className="w-8 h-8 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-xs"
+              title={user?.email || 'User'}
+            >
+              {userInitials}
             </div>
             <button
+              onClick={handleLogout}
               className="text-muted-foreground hover:text-destructive p-1.5 rounded transition-colors"
               title="Logout"
             >
@@ -147,7 +172,7 @@ export const DashboardLayout: React.FC = () => {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>Backend Connected</span>
+              <span>Tenant: {organization?.slug || 'was'}</span>
             </div>
           </div>
         </header>
@@ -160,4 +185,3 @@ export const DashboardLayout: React.FC = () => {
     </div>
   );
 };
-

@@ -44,3 +44,4 @@ CREATE INDEX IF NOT EXISTS idx_messages_conv_sent ON messages(conversation_id, s
 CREATE INDEX IF NOT EXISTS idx_messages_org_created ON messages(organization_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_messages_whatsapp_id ON messages(whatsapp_message_id);
 CREATE INDEX IF NOT EXISTS idx_messages_delivery_status ON messages(delivery_status);
+

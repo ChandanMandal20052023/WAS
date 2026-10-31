@@ -4,3 +4,4 @@ DROP TABLE IF EXISTS conversation_assignments;
 DROP TABLE IF EXISTS conversation_tags;
 DROP TABLE IF EXISTS contact_tags;
 DROP TABLE IF EXISTS tags;
+

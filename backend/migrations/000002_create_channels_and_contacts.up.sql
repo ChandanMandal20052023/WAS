@@ -37,3 +37,4 @@ CREATE TABLE IF NOT EXISTS contacts (
 CREATE INDEX IF NOT EXISTS idx_contacts_org_phone ON contacts(organization_id, phone_number);
 CREATE INDEX IF NOT EXISTS idx_contacts_org_name ON contacts(organization_id, full_name);
 CREATE INDEX IF NOT EXISTS idx_contacts_org_created ON contacts(organization_id, created_at DESC);
+

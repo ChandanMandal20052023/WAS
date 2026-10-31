@@ -31,3 +31,4 @@ func main() {
 	log.Println("[migrate] Migration completed successfully.")
 	os.Exit(0)
 }
+

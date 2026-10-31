@@ -61,3 +61,4 @@ CREATE TABLE IF NOT EXISTS internal_notes (
 CREATE INDEX IF NOT EXISTS idx_internal_notes_conv ON internal_notes(conversation_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_internal_notes_contact ON internal_notes(contact_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_internal_notes_user ON internal_notes(user_id);
+

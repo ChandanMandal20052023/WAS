@@ -31,3 +31,4 @@ func TestEmbeddedMigrations(t *testing.T) {
 		t.Errorf("expected %d down migration files, got %d", expectedPairs, downCount)
 	}
 }
+
