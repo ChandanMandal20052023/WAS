@@ -9,13 +9,7 @@ import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { WhatsAppChannelsPage } from './pages/channels/WhatsAppChannelsPage';
 import { ContactsPage } from './pages/contacts/ContactsPage';
 import { InboxPage } from './pages/inbox/InboxPage';
-
-const TeamPlaceholder: React.FC = () => (
-  <div className="p-8 text-center text-muted-foreground">
-    <h2 className="text-xl font-bold text-foreground">Team Management & Workloads</h2>
-    <p className="mt-2 text-sm">Role-based member assignments scheduled for Phase 9.</p>
-  </div>
-);
+import { TeamPage } from './pages/team/TeamPage';
 
 const AnalyticsPlaceholder: React.FC = () => (
   <div className="p-8 text-center text-muted-foreground">
@@ -52,7 +46,7 @@ export const App: React.FC = () => {
           <Route path="inbox" element={<InboxPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="channels" element={<WhatsAppChannelsPage />} />
-          <Route path="team" element={<TeamPlaceholder />} />
+          <Route path="team" element={<TeamPage />} />
           <Route path="analytics" element={<AnalyticsPlaceholder />} />
           <Route path="settings" element={<SettingsPlaceholder />} />
         </Route>

@@ -16,12 +16,17 @@ import (
 	"was/backend/internal/utils"
 )
 
+type EventBroadcaster interface {
+	BroadcastEvent(eventType string, orgID uuid.UUID, payload interface{})
+}
+
 type Service struct {
 	repo         *Repository
 	convRepo     *conversations.Repository
 	contactRepo  *contacts.Repository
 	channelRepo  channels.Repository
 	gateway      evolution.EvolutionGateway
+	broadcaster  EventBroadcaster
 }
 
 func NewService(
@@ -30,6 +35,7 @@ func NewService(
 	contactRepo *contacts.Repository,
 	channelRepo channels.Repository,
 	gateway evolution.EvolutionGateway,
+	broadcaster EventBroadcaster,
 ) *Service {
 	return &Service{
 		repo:        repo,
@@ -37,6 +43,7 @@ func NewService(
 		contactRepo: contactRepo,
 		channelRepo: channelRepo,
 		gateway:     gateway,
+		broadcaster: broadcaster,
 	}
 }
 
@@ -89,6 +96,10 @@ func (s *Service) SendTextMessage(ctx context.Context, orgID, convID, userID uui
 
 	// Update conversation last message preview
 	_ = s.convRepo.UpdateLastMessage(ctx, convID, text, time.Now(), false)
+
+	if s.broadcaster != nil {
+		s.broadcaster.BroadcastEvent("message.new", orgID, msg)
+	}
 
 	return msg, nil
 }
@@ -174,6 +185,10 @@ func (s *Service) ProcessInboundMessage(ctx context.Context, token, senderPhone,
 
 	// 4. Update last message preview and increment unread count
 	_ = s.convRepo.UpdateLastMessage(ctx, conv.ID, text, timestamp, true)
+
+	if s.broadcaster != nil {
+		s.broadcaster.BroadcastEvent("message.new", channel.OrganizationID, msg)
+	}
 
 	return nil
 }

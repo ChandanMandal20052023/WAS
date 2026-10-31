@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { useAuthStore } from '../stores/authStore';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const navItems = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
@@ -35,6 +36,7 @@ export const DashboardLayout: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const { user, organization, role, logout } = useAuthStore();
+  const { isConnected: isWSConnected } = useWebSocket();
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -170,8 +172,18 @@ export const DashboardLayout: React.FC = () => {
             </h1>
           </div>
           <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  isWSConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
+                }`}
+              ></span>
+              <span className="font-mono text-[11px]">
+                {isWSConnected ? 'Live Socket: Online' : 'Connecting...'}
+              </span>
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
               <span>Tenant: {organization?.slug || 'was'}</span>
             </div>
           </div>

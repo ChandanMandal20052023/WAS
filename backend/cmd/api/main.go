@@ -25,6 +25,7 @@ import (
 	"was/backend/internal/models"
 	"was/backend/internal/organizations"
 	"was/backend/internal/utils"
+	"was/backend/internal/websocket"
 	"was/backend/migrations"
 )
 
@@ -68,6 +69,10 @@ func main() {
 		defer rdb.Close()
 	}
 
+	// WebSocket Hub for Real-time Events
+	wsHub := websocket.NewHub()
+	go wsHub.Run(context.Background())
+
 	// Instantiate Services and Handlers if DB is available
 	var authHandler *auth.Handler
 	var orgHandler *organizations.Handler
@@ -99,7 +104,7 @@ func main() {
 		convHandler = conversations.NewHandler(convService)
 
 		msgRepo := messages.NewRepository(pg.Pool)
-		msgService := messages.NewService(msgRepo, convRepo, contactRepo, channelRepo, evolutionGateway)
+		msgService := messages.NewService(msgRepo, convRepo, contactRepo, channelRepo, evolutionGateway, wsHub)
 		msgHandler = messages.NewHandler(msgService)
 
 		webhookHandler = evolution.NewWebhookHandler(channelRepo, msgService)
@@ -162,6 +167,9 @@ func main() {
 			})
 		})
 
+		// Real-time Tenant WebSocket Stream
+		v1.Get("/ws", wsHub.HandleWebSocket(tokenManager))
+
 		// Public Inbound Evolution Go Webhook Callback
 		v1.Post("/webhooks/evolution/{token}", func(w http.ResponseWriter, r *http.Request) {
 			if webhookHandler != nil {
@@ -205,6 +213,8 @@ func main() {
 				orgRouter.Get("/current", orgHandler.GetCurrent)
 				orgRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Put("/current", orgHandler.UpdateCurrent)
 				orgRouter.Get("/members", orgHandler.GetMembers)
+				orgRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Put("/members/{id}/role", orgHandler.UpdateMemberRole)
+				orgRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Put("/members/{id}/status", orgHandler.UpdateMemberStatus)
 			}
 		})
 
