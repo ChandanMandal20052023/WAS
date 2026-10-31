@@ -36,3 +36,4 @@ func TestPhoneNormalization(t *testing.T) {
 		}
 	}
 }
+

@@ -65,3 +65,4 @@ export interface ConversationListResponse {
   limit: number;
   offset: number;
 }
+

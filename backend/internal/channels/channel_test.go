@@ -153,3 +153,4 @@ func TestChannelLifecycleWithMockAdapter(t *testing.T) {
 		t.Errorf("expected status 'Disconnected', got '%s'", ch.Status)
 	}
 }
+

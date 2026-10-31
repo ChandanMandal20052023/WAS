@@ -161,3 +161,4 @@ func (r *Repository) CreateNote(ctx context.Context, note *models.InternalNote) 
 		note.Content,
 	).Scan(&note.ID, &note.CreatedAt, &note.UpdatedAt)
 }
+

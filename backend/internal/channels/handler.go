@@ -187,3 +187,4 @@ func (h *Handler) PairPhone(w http.ResponseWriter, r *http.Request) {
 
 	utils.JSON(w, http.StatusOK, map[string]string{"pairing_code": code})
 }
+

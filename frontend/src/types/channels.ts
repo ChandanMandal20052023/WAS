@@ -41,3 +41,4 @@ export interface ChannelStatusResponse {
 export interface PairPhonePayload {
   phone: string;
 }
+

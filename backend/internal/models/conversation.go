@@ -56,3 +56,4 @@ type ConversationFilter struct {
 	Limit     int
 	Offset    int
 }
+

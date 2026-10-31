@@ -40,3 +40,4 @@ func (s *Service) AssignAgent(ctx context.Context, orgID, convID uuid.UUID, agen
 func (s *Service) MarkAsRead(ctx context.Context, orgID, convID uuid.UUID) error {
 	return s.repo.ResetUnread(ctx, orgID, convID)
 }
+

@@ -43,3 +43,4 @@ export interface ContactListResponse {
   limit: number;
   offset: number;
 }
+

@@ -324,3 +324,4 @@ export const ConnectChannelModal: React.FC<ConnectChannelModalProps> = ({
     </div>
   );
 };
+

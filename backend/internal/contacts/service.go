@@ -62,3 +62,4 @@ func (s *Service) CreateTag(ctx context.Context, orgID uuid.UUID, req models.Cre
 	}
 	return s.repo.CreateTag(ctx, orgID, name, req.ColorHex)
 }
+

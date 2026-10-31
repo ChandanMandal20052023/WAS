@@ -212,3 +212,4 @@ func (s *channelService) PairPhone(ctx context.Context, orgID, id uuid.UUID, pho
 
 	return s.evolutionGateway.PairPhone(ctx, ch.InstanceToken, phone)
 }
+

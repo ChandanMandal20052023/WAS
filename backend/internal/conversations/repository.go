@@ -303,3 +303,4 @@ func (r *Repository) GetTagsForConversation(ctx context.Context, convID uuid.UUI
 	}
 	return tags, nil
 }
+

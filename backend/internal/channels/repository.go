@@ -160,3 +160,4 @@ func (r *pgRepository) Delete(ctx context.Context, orgID, id uuid.UUID) error {
 	_, err := r.pool.Exec(ctx, query, orgID, id)
 	return err
 }
+

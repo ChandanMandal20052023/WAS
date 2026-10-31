@@ -58,3 +58,4 @@ type ContactFilter struct {
 	Limit  int
 	Offset int
 }
+

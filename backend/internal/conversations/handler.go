@@ -185,3 +185,4 @@ func (h *Handler) MarkAsRead(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusNoContent)
 }
+

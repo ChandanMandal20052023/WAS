@@ -72,3 +72,4 @@ type InternalNote struct {
 type CreateInternalNoteRequest struct {
 	Content string `json:"content"`
 }
+
