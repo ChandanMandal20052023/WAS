@@ -13,8 +13,10 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"was/backend/internal/auth"
+	"was/backend/internal/channels"
 	"was/backend/internal/config"
 	"was/backend/internal/database"
+	"was/backend/internal/evolution"
 	"was/backend/internal/middleware"
 	"was/backend/internal/models"
 	"was/backend/internal/organizations"
@@ -29,6 +31,16 @@ func main() {
 
 	// Token Manager for JWT Auth
 	tokenManager := auth.NewTokenManager(cfg.JWTSecret)
+
+	// Evolution Go Gateway selection (Live vs Mock)
+	var evolutionGateway evolution.EvolutionGateway
+	if cfg.UseMockEvolution {
+		log.Println("[evolution] Using Mock Evolution Adapter for testing/development")
+		evolutionGateway = evolution.NewMockAdapter()
+	} else {
+		log.Printf("[evolution] Initializing Live Evolution Client pointing to %s", cfg.EvolutionURL)
+		evolutionGateway = evolution.NewLiveClient(cfg.EvolutionURL, cfg.EvolutionKey)
+	}
 
 	// Database initialization
 	pg, err := database.NewPostgres(cfg.DatabaseURL)
@@ -55,6 +67,8 @@ func main() {
 	// Instantiate Services and Handlers if DB is available
 	var authHandler *auth.Handler
 	var orgHandler *organizations.Handler
+	var channelHandler *channels.Handler
+	var webhookHandler *evolution.WebhookHandler
 
 	if pg != nil && pg.Pool != nil {
 		authRepo := auth.NewRepository(pg.Pool)
@@ -63,6 +77,12 @@ func main() {
 
 		orgRepo := organizations.NewRepository(pg.Pool)
 		orgHandler = organizations.NewHandler(orgRepo)
+
+		channelRepo := channels.NewRepository(pg.Pool)
+		channelService := channels.NewService(channelRepo, evolutionGateway, cfg.WebhookBaseURL)
+		channelHandler = channels.NewHandler(channelService)
+
+		webhookHandler = evolution.NewWebhookHandler(channelRepo)
 	}
 
 	r := chi.NewRouter()
@@ -119,6 +139,15 @@ func main() {
 			})
 		})
 
+		// Public Inbound Evolution Go Webhook Callback
+		v1.Post("/webhooks/evolution/{token}", func(w http.ResponseWriter, r *http.Request) {
+			if webhookHandler != nil {
+				webhookHandler.HandleWebhook(w, r)
+			} else {
+				utils.Error(w, http.StatusServiceUnavailable, "SERVICE_UNAVAILABLE", "Database not connected")
+			}
+		})
+
 		// Authentication Routes
 		v1.Route("/auth", func(authRouter chi.Router) {
 			if authHandler != nil {
@@ -156,13 +185,29 @@ func main() {
 			}
 		})
 
-		// Placeholder route groups ready for next phases
-		v1.Route("/channels", func(r chi.Router) {
-			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-				utils.JSON(w, http.StatusOK, "channels module initialized")
-			})
+		// WhatsApp Channels Routes
+		v1.Route("/channels", func(chRouter chi.Router) {
+			if channelHandler != nil {
+				chRouter.Use(middleware.Authenticate(tokenManager))
+
+				chRouter.Get("/", channelHandler.List)
+				chRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Post("/", channelHandler.Create)
+				chRouter.Get("/{id}", channelHandler.Get)
+				chRouter.Get("/{id}/qr", channelHandler.GetQRCode)
+				chRouter.Post("/{id}/connect", channelHandler.Connect)
+				chRouter.Get("/{id}/status", channelHandler.SyncStatus)
+				chRouter.Post("/{id}/disconnect", channelHandler.Disconnect)
+				chRouter.Post("/{id}/reconnect", channelHandler.Reconnect)
+				chRouter.With(middleware.RequireRoles(models.RoleOwner, models.RoleAdmin)).Delete("/{id}", channelHandler.Delete)
+				chRouter.Post("/{id}/pair", channelHandler.PairPhone)
+			} else {
+				chRouter.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+					utils.JSON(w, http.StatusOK, "channels module initialized (database pending)")
+				})
+			}
 		})
 
+		// Placeholder route groups ready for next phases
 		v1.Route("/contacts", func(r chi.Router) {
 			r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
 				utils.JSON(w, http.StatusOK, "contacts module initialized")

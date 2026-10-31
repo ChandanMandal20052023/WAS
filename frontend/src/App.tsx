@@ -21,12 +21,7 @@ const ContactsPlaceholder: React.FC = () => (
   </div>
 );
 
-const ChannelsPlaceholder: React.FC = () => (
-  <div className="p-8 text-center text-muted-foreground">
-    <h2 className="text-xl font-bold text-foreground">WhatsApp Channels (Evolution Go)</h2>
-    <p className="mt-2 text-sm">QR Code pairing and device link manager scheduled for Phase 5.</p>
-  </div>
-);
+import { WhatsAppChannelsPage } from './pages/channels/WhatsAppChannelsPage';
 
 const TeamPlaceholder: React.FC = () => (
   <div className="p-8 text-center text-muted-foreground">
@@ -69,7 +64,7 @@ export const App: React.FC = () => {
           <Route index element={<DashboardPage />} />
           <Route path="inbox" element={<InboxPlaceholder />} />
           <Route path="contacts" element={<ContactsPlaceholder />} />
-          <Route path="channels" element={<ChannelsPlaceholder />} />
+          <Route path="channels" element={<WhatsAppChannelsPage />} />
           <Route path="team" element={<TeamPlaceholder />} />
           <Route path="analytics" element={<AnalyticsPlaceholder />} />
           <Route path="settings" element={<SettingsPlaceholder />} />
