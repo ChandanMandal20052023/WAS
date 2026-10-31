@@ -46,3 +46,4 @@ func (r *RedisClient) Ping(ctx context.Context) error {
 	}
 	return r.Client.Ping(ctx).Err()
 }
+

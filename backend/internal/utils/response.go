@@ -46,3 +46,4 @@ func Error(w http.ResponseWriter, status int, code, message string) {
 
 	_ = json.NewEncoder(w).Encode(resp)
 }
+

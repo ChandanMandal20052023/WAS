@@ -16,6 +16,7 @@ import (
 	"was/backend/internal/database"
 	"was/backend/internal/middleware"
 	"was/backend/internal/utils"
+	"was/backend/migrations"
 )
 
 func main() {
@@ -29,6 +30,12 @@ func main() {
 		log.Printf("[database] Warning: Failed to connect to PostgreSQL: %v", err)
 	} else {
 		defer pg.Close()
+
+		// Execute database schema migrations
+		log.Println("[database] Running database schema migrations...")
+		if err := migrations.RunMigrations(cfg.DatabaseURL); err != nil {
+			log.Printf("[database] Warning: Schema migration failed: %v", err)
+		}
 	}
 
 	// Redis initialization
@@ -150,3 +157,4 @@ func main() {
 
 	log.Println("[WAS] Server exited cleanly.")
 }
+

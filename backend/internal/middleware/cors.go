@@ -16,3 +16,4 @@ func CORS() func(next http.Handler) http.Handler {
 		MaxAge:           300,
 	})
 }
+

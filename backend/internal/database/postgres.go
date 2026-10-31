@@ -53,3 +53,4 @@ func (db *PostgresDB) Ping(ctx context.Context) error {
 	}
 	return db.Pool.Ping(ctx)
 }
+
