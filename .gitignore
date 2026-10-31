@@ -1,0 +1,53 @@
+# Environment Files
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# Dependencies & Package Managers
+node_modules/
+vendor/
+.pnpm-store/
+
+# Build & Output Artifacts
+dist/
+build/
+out/
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Operating System & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs & Temporary Files
+*.log
+logs/
+temp/
+tmp/
+.cache/
+
+# Docker persistent volumes mounted locally
+postgres_data/
+redis_data/
+was_postgres_data/
+was_redis_data/
+evolution_go_data/
+evolution_go_logs/
+
+# Coverage
+coverage/
+*.coverprofile

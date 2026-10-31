@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  was-postgres:
+    image: postgres:16-alpine
+    container_name: was-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-was_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-was_password}
+      POSTGRES_DB: ${POSTGRES_DB:-was_crm}
+    ports:
+      - "5432:5432"
+    volumes:
+      - was_postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/docker/postgres/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U was_user -d was_crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - was-network
+
+  was-redis:
+    image: redis:7-alpine
+    container_name: was-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - was_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - was-network
+
+  was-evolution:
+    build:
+      context: ./third-party/evolution-go
+      dockerfile: Dockerfile
+    container_name: was-evolution
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8080
+      CLIENT_NAME: "WAS"
+      GLOBAL_API_KEY: ${EVOLUTION_GLOBAL_API_KEY:-was_global_secret_key_12345}
+      POSTGRES_AUTH_DB: "postgresql://${POSTGRES_USER:-was_user}:${POSTGRES_PASSWORD:-was_password}@was-postgres:5432/evogo_auth?sslmode=disable"
+      POSTGRES_USERS_DB: "postgresql://${POSTGRES_USER:-was_user}:${POSTGRES_PASSWORD:-was_password}@was-postgres:5432/evogo_users?sslmode=disable"
+      DATABASE_SAVE_MESSAGES: "false"
+      WADEBUG: "INFO"
+      LOGTYPE: "console"
+      CONNECT_ON_STARTUP: "true"
+    ports:
+      - "8081:8080"
+    depends_on:
+      was-postgres:
+        condition: service_healthy
+    networks:
+      - was-network
+
+  was-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: was-backend
+    restart: unless-stopped
+    environment:
+      PORT: 8080
+      APP_ENV: development
+      DATABASE_URL: "postgres://${POSTGRES_USER:-was_user}:${POSTGRES_PASSWORD:-was_password}@was-postgres:5432/was_crm?sslmode=disable"
+      REDIS_URL: "redis://was-redis:6379"
+      JWT_SECRET: ${JWT_SECRET:-was_jwt_super_secret_signing_key_32bytes}
+      EVOLUTION_API_URL: "http://was-evolution:8080"
+      EVOLUTION_GLOBAL_KEY: ${EVOLUTION_GLOBAL_API_KEY:-was_global_secret_key_12345}
+      WEBHOOK_BASE_URL: "http://was-backend:8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      was-postgres:
+        condition: service_healthy
+      was-redis:
+        condition: service_healthy
+    networks:
+      - was-network
+
+  was-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: was-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - was-backend
+    networks:
+      - was-network
+
+volumes:
+  was_postgres_data:
+  was_redis_data:
+
+networks:
+  was-network:
+    driver: bridge
