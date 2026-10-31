@@ -35,3 +35,4 @@ This document logs the AI collaboration guidelines, architectural rationale, and
   - `README.md`, `AI_USAGE.md`, `.env.example`, `.gitignore`
   - `docs/architecture.md`, `docs/database.md`, `docs/api.md`, `docs/setup.md`
   - `docker-compose.yml`
+

@@ -72,3 +72,4 @@ Evolution Go acts as the WhatsApp gateway service.
 - **Global API Key:** Configured via `EVOLUTION_GLOBAL_API_KEY` in `.env`.
 - **Database Connection:** Connects to PostgreSQL databases `evogo_auth` and `evogo_users`.
 - **Mock Mode:** If you do not have WhatsApp test devices available, set `USE_MOCK_EVOLUTION_ADAPTER=true` in `.env` to enable the built-in emulator.
+

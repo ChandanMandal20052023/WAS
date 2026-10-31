@@ -120,3 +120,4 @@ sequenceDiagram
     WSHub->>Agent: WS Event: "new_message"
     Note over Agent: Inbox updates in real-time<br/>without page refresh
 ```
+

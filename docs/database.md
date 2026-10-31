@@ -245,3 +245,4 @@ erDiagram
 | `ip_address` | VARCHAR(45) | NULL | Client IP address |
 | `user_agent` | TEXT | NULL | Client user agent |
 | `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT NOW() | Immutable timestamp |
+

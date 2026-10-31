@@ -117,3 +117,4 @@
 3. `conversation_assigned`: Pushed when a conversation is assigned to an agent.
 4. `conversation_status`: Pushed when a conversation is marked open, pending, or resolved.
 5. `channel_status`: Pushed when a WhatsApp channel connects, disconnects, or changes state.
+
